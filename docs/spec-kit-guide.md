@@ -76,31 +76,36 @@ pixi --version
 
 > pixi manages Python itself — you do **not** need to install Python separately. It will pull Python 3.12+ from conda-forge automatically.
 
-### Install the `specify` CLI via pixi
+### Install the `specify` CLI via uv
+
+The `specify-cli` package on conda-forge may lag behind the upstream repo. Starting with v0.5.0, template files are **bundled inside the Python package** (no longer downloaded as release assets). Install directly from the git repo to ensure bundled templates work:
 
 ```bash
-# Add specify-cli as a global pixi tool
-pixi global install specify-cli
+# Install uv if you don't have it (pixi can provide it)
+pixi global install uv
+
+# Install specify-cli from the spec-kit repo (recommended)
+uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@v0.5.0
 
 # Verify installation
 specify version
 specify check
 ```
 
+> **⚠️ Known issue:** The conda-forge `specify-cli` package (v1.0.0) still tries to download template ZIP assets from GitHub Releases, but v0.5.0+ releases no longer include them ([#2092](https://github.com/github/spec-kit/issues/2092)). Use the `uv` install method above to avoid the "No matching release asset found" error.
+
 ### One-time usage (no install)
 
 ```bash
-# Run directly with pixi exec (no permanent install)
-pixi exec specify-cli -- specify init my-project --ai claude
+# Run directly with uvx (no permanent install)
+uvx --from git+https://github.com/github/spec-kit.git specify init my-project --ai claude
 ```
-
-> **Note:** `pixi exec --spec` accepts conda matchspecs, not pip-style git URLs. If `specify-cli` is not yet published to conda-forge, use `pip install git+https://github.com/github/spec-kit.git` in a temporary environment instead.
 
 ### Upgrading
 
 ```bash
 # Update specify-cli to the latest version
-pixi global update specify-cli
+uv tool upgrade specify-cli
 ```
 
 ### Initialize a project
@@ -117,6 +122,13 @@ specify init --here --ai copilot
 # Skip git init (if already a git repo)
 specify init . --ai claude --no-git
 ```
+
+> **Multi-project repos:** If your repository contains multiple independent projects (e.g., `hello-world/`, `data-tool/`), initialize spec-kit **inside each project directory** rather than at the repo root. This keeps specs colocated with the code they describe:
+>
+> ```bash
+> cd hello-world
+> specify init --here --ai copilot --no-git
+> ```
 
 ### Supported AI Agents
 
@@ -718,9 +730,13 @@ train = "python src/train.py"
 ### 🚀 Quick Reference
 
 ```
+# Installation (use uv, not pixi global)
+uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@v0.5.0
+
 specify init <name> --ai <agent>    Initialize new project
 specify init . --ai claude          Initialize in current directory
 specify init --here --ai copilot    Same as above
+specify init --here --ai copilot --no-git  In existing git repo
 specify check                       Check system requirements
 specify --version                   Show CLI version
 ```
@@ -776,8 +792,8 @@ pixi run test → All green? → Merge branch
 curl -fsSL https://pixi.sh/install.sh | bash   # macOS/Linux
 iwr -useb https://pixi.sh/install.ps1 | iex    # Windows
 
-# Install specify CLI via pixi global
-pixi global install specify-cli
+# Install specify CLI via uv (pixi global does not support PyPI git installs)
+uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@v0.5.0
 
 # Always initialize spec-kit inside your pixi project
 cd my-pixi-project
@@ -859,11 +875,11 @@ specify init . --ai claude --debug
 ### `specify` command not found
 
 ```bash
-# Ensure pixi global bin is in PATH (pixi adds this automatically on install)
-export PATH="$HOME/.pixi/bin:$PATH"
+# Ensure uv tool bin is in PATH
+export PATH="$HOME/.local/bin:$PATH"
 
-# Re-install via pixi global
-pixi global install specify-cli
+# Re-install via uv from the git repo
+uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@v0.5.0
 
 # Verify
 specify --version
@@ -877,11 +893,21 @@ sudo dpkg -i gcm-linux_amd64.2.6.1.deb
 git config --global credential.helper manager
 ```
 
+### `specify init` fails with "No matching release asset found"
+
+This is a known issue ([#2092](https://github.com/github/spec-kit/issues/2092)). Starting with v0.5.0, spec-kit bundles templates inside the Python package and no longer publishes ZIP assets to GitHub Releases. The conda-forge package still tries to download them.
+
+**Fix:** Install via `uv` from the git repo instead:
+
+```bash
+uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@v0.5.0
+```
+
 ### AI agent not picking up slash commands
 
-- Ensure you ran `specify init` in the project root
+- Ensure you ran `specify init` in the project directory (not the repo root in multi-project repos)
 - Restart your AI agent/editor after initialization
-- Check that `.github/` or agent-specific config files were created
+- Check that `.github/agents/` and `.github/prompts/` directories were created
 
 ### Spec is too vague / AI asks too many questions
 
