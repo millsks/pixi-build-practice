@@ -1,0 +1,13 @@
+[project]
+name = "hello-world"
+version = "0.1.0"
+description = "A basic Hello World application served with FastAPI"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.100",
+    "uvicorn>=0.23",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
